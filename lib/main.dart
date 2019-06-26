@@ -1,11 +1,24 @@
 import 'package:flutter/material.dart';
-void main(){
+import 'package:flutter/widgets.dart';
+import 'package:http/http.dart' as http;
+import 'dart:async';
+import 'dart:convert';
+
+const String url = 'https://newsapi.org/v2/top-headlines?country=br&category=technology&apiKey=59f57a2b05034632aa4038428afe2b26';
+// const String url = 'https://api.hgbrasil.com/finance';
+
+void main() async {
+  
+  print(await getNews());
   runApp(MaterialApp(
     home: Home(),
   ));
 }
 
-
+Future<Map> getNews() async {
+  http.Response response = await http.get(url);
+  return json.decode(response.body);
+}
 
 class Home extends StatefulWidget {
   Home({Key key}) : super(key: key);
@@ -14,108 +27,47 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-
-  //Variaveis
-  TextEditingController weightController = new TextEditingController();
-  TextEditingController heightController = new TextEditingController();
-  String _info = 'Informe seu dados';
-
-  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  //Funções
-  _resetText(){
-    weightController.text = '';
-    heightController.text = '';
-    setState(() {
-    _info = 'Informe seu dados';
-    _formKey = GlobalKey<FormState>();    // ADICIONE ESTA LINHA!
-
-    });
-  }
-  _calcula(){
-    setState(() {
-      double weight = double.parse(weightController.text);
-      double height = double.parse(heightController.text) / 100;
-      double imc = weight / (height * height);
-      _info = 'Abaixo do peso (${imc.toStringAsPrecision(3)})';
-    });
-
-
-
-  }
-  //Fim Funções
-
+  dynamic dolar;
+  double euro;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Calculando IMC'),
-        centerTitle: true,
-        backgroundColor: Colors.green,
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _resetText
-          )
-        ],
-      ),
-      backgroundColor: Colors.grey[100],
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Icon(Icons.person_outline, size: 120.0, color: Colors.green),
-          TextFormField(
-            keyboardType: TextInputType.number, 
-            decoration: InputDecoration(labelText: 'Peso (kg)', labelStyle: TextStyle(color: Colors.indigo, fontSize: 15.0)),
-            controller: weightController,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.green, fontSize: 25.0),
-            validator: (value){
-              if(value.isEmpty){
-                return 'Informe seu peso';
-              }
-            },
-          ),
-          TextFormField(
-            keyboardType: TextInputType.number, 
-            decoration: InputDecoration(labelText: 'Altura (cm)',labelStyle: TextStyle(color: Colors.green, fontSize: 15.0)),
-            controller: heightController,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.green, fontSize: 25),
-            validator: (value){
-              if(value.isEmpty){
-                return 'Informe sua Altura';
-              }
-            },
-          ),
-          Padding(
-            padding: EdgeInsets.only(top: 20, bottom: 10),
-            child:  Container(
-            height: 50,
-            child:RaisedButton(
-              onPressed: (){
-                if(_formKey.currentState.validate()){
-                  _calcula();
+      backgroundColor: Colors.black,
+       appBar: AppBar(
+         title: Text('Comsumindo API'),
+         centerTitle: true,
+         backgroundColor: Colors.amber[300],
+         actions: <Widget>[
+           IconButton(icon: Icon(Icons.refresh), onPressed: (){})
+         ],
+       ),
+       body: FutureBuilder<Map>(
+       future: getNews(),
+         builder: (context, snapshot){
+           switch(snapshot.connectionState){
+             case ConnectionState.none:
+             case ConnectionState.waiting:
+                return Center(
+                  child: Text('Carregando Dados',
+                  style: TextStyle(color: Colors.amber, fontSize: 25),)
+                );
+                default:
+                if(snapshot.hasError){
+                  return Center(
+                  child: Text('Erro ao carregar dados',
+                  style: TextStyle(color: Colors.amber, fontSize: 25),)
+                  );
+                }else{
+                  dolar = snapshot.data['articles'];
+                  // dolar = snapshot.data['results']['currencies']['USD']['buy'];
+                  // euro = snapshot.data['results']['currencies']['EUR']['buy'];
+                  print(dolar);
+                  // print(euro);
+                  return Container( color: Colors.green);
                 }
-              },
-              child: Text('Calcular', 
-              style: TextStyle(color: Colors.white, fontSize: 25),),
-              color: Colors.green
-            ),
-          ),
-        ),
-        Text(_info,
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.green, fontSize: 25),
-        )
-        ],
-      ),
-        )
-      ),
-    );
+           }
+        })
+       );
   }
 }
+
