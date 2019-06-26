@@ -37,7 +37,10 @@ class _HomeState extends State<Home> {
       double weight = double.parse(weightController.text);
       double height = double.parse(heightController.text) / 100;
       double imc = weight / (height * height);
-      _info = 'Abaixo do peso (${imc.toStringAsPrecision(3)})';
+      print(imc);
+      if(imc < 18.6){
+        _info = 'Abaixo do peso (${imc.toStringAsPrecision(3)})';
+      }
     });
 
 
@@ -99,7 +102,7 @@ class _HomeState extends State<Home> {
             child:RaisedButton(
               onPressed: (){
                 if(_formKey.currentState.validate()){
-                  _calcula();
+                  _calcula;
                 }
               },
               child: Text('Calcular', 
