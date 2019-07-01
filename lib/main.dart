@@ -9,9 +9,13 @@ const String url = 'https://newsapi.org/v2/top-headlines?country=br&category=tec
 
 void main() async {
   
-  print(await getNews());
+  // print(await getNews());
   runApp(MaterialApp(
     home: Home(),
+    theme: ThemeData(
+      hintColor: Colors.amber,
+      primaryColor: Colors.white
+    ),
   ));
 }
 
@@ -27,8 +31,27 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  TextEditingController realController = new TextEditingController();
+  TextEditingController dolarController = new TextEditingController();
+  TextEditingController euroController = new TextEditingController();
   dynamic dolar;
-  double euro;
+  dynamic euro;
+
+void _realChanger(String text){
+  // double real = double.parse(text);
+  // dolarController.text = (real/dolar).toStringAsFixed(2);
+  // euroController.text = (real/euro).toStringAsFixed(2);
+}
+void _dolarChanger(String text){
+//  double dolar = double.parse(text);
+//  realController.text = (dolar * this.dolar).toStringAsFixed(2);
+//  euroController.text = (dolar * this.dolar/euro).toStringAsFixed(2);
+}
+void _euroChanger(String text){
+//  double euro = double.parse(text);
+//  realController.text = (euro * this.euro).toStringAsFixed(2);
+//  dolarController.text = (euro * this.euro/dolar).toStringAsFixed(2);
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,12 +81,28 @@ class _HomeState extends State<Home> {
                   style: TextStyle(color: Colors.amber, fontSize: 25),)
                   );
                 }else{
-                  dolar = snapshot.data['articles'];
                   // dolar = snapshot.data['results']['currencies']['USD']['buy'];
                   // euro = snapshot.data['results']['currencies']['EUR']['buy'];
-                  print(dolar);
-                  // print(euro);
-                  return Container( color: Colors.green);
+                  var test = snapshot.data['articles'];
+                  for (var item in test) {
+                    
+                    print(item);
+                  }
+
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.all(10),
+                    child:  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Icon(Icons.monetization_on, size: 150,  color: Colors.amber,),
+                        criarInputs('Reais', 'R\$', realController, _realChanger),
+                        Divider(),
+                        criarInputs('Dólares', 'US\$', dolarController, _dolarChanger),
+                        Divider(), 
+                        criarInputs('Euros', '€', euroController, _euroChanger)
+                      ],
+                    ),
+                  );
                 }
            }
         })
@@ -71,3 +110,17 @@ class _HomeState extends State<Home> {
   }
 }
 
+ Widget criarInputs(String label, String prefixo, TextEditingController ctrl, Function funcao){
+      return TextField(
+        controller: ctrl,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.amber),
+        border: OutlineInputBorder(),
+          prefixText: prefixo,
+        ),
+        style: TextStyle(color: Colors.amber, fontSize: 25),
+        onChanged: funcao,
+      );
+ }
