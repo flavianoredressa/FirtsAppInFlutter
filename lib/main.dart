@@ -1,120 +1,88 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'dart:async';
+import 'dart:io';
 import 'dart:convert';
 
-// const String url = 'https://newsapi.org/v2/top-headlines?country=br&category=technology&apiKey=59f57a2b05034632aa4038428afe2b26';
-const String url = 'https://api.hgbrasil.com/finance';
-
-void main() async {
-  
-  // print(await getNews());
-  runApp(MaterialApp(
+void main() {
+ runApp(MaterialApp(
     home: Home(),
-    theme: ThemeData(
-      hintColor: Colors.amber,
-      primaryColor: Colors.white
-    ),
-  ));
-}
-
-Future<Map> getNews() async {
-  http.Response response = await http.get(url);
-  return json.decode(response.body);
+ ));
 }
 
 class Home extends StatefulWidget {
   Home({Key key}) : super(key: key);
-
   _HomeState createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  TextEditingController realController = new TextEditingController();
-  TextEditingController dolarController = new TextEditingController();
-  TextEditingController euroController = new TextEditingController();
-  dynamic dolar;
-  dynamic euro;
-
-void _realChanger(String text){
-  double real = double.parse(text);
-  dolarController.text = (real/dolar).toStringAsFixed(2);
-  euroController.text = (real/euro).toStringAsFixed(2);
-}
-void _dolarChanger(String text){
- double dolar = double.parse(text);
- realController.text = (dolar * this.dolar).toStringAsFixed(2);
- euroController.text = (dolar * this.dolar/euro).toStringAsFixed(2);
-}
-void _euroChanger(String text){
- double euro = double.parse(text);
- realController.text = (euro * this.euro).toStringAsFixed(2);
- dolarController.text = (euro * this.euro/dolar).toStringAsFixed(2);
-}
+  List _toDoList = [];
+  TextEditingController nova = TextEditingController();
+  void _addList(){
+    print(nova.text);
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-       appBar: AppBar(
-         title: Text('Comsumindo API'),
-         centerTitle: true,
-         backgroundColor: Colors.amber[300],
-         actions: <Widget>[
-           IconButton(icon: Icon(Icons.refresh), onPressed: (){})
-         ],
-       ),
-       body: FutureBuilder<Map>(
-       future: getNews(),
-         builder: (context, snapshot){
-           switch(snapshot.connectionState){
-             case ConnectionState.none:
-             case ConnectionState.waiting:
-                return Center(
-                  child: Text('Carregando Dados',
-                  style: TextStyle(color: Colors.amber, fontSize: 25),)
+      appBar: AppBar(
+        title: Text('Lista de Tarfas'),
+        backgroundColor: Colors.blueAccent,
+        centerTitle: true,
+        ),
+        body: Column(children: <Widget>[
+          Container(
+            padding: EdgeInsets.fromLTRB(17, 1, 7, 1),
+            child: Row(children: <Widget>[
+              Expanded(
+                child:TextField(
+                  controller: nova,
+                decoration: InputDecoration(
+                  labelText: 'Nova Tarefa',
+                  labelStyle: TextStyle(color: Colors.blueAccent)
+                )
+                ),
+              ),
+              RaisedButton(
+                color: Colors.blueAccent,
+                child: Text('Add'),
+                textColor: Colors.white,
+                onPressed: _addList,
+              ),
+                                       
+            ],
+            ),
+          ),
+          Expanded(child: ListView.builder(
+              padding: EdgeInsets.only(top: 10),
+              itemCount: _toDoList.length,
+              itemBuilder: (context, index){
+                return CheckboxListTile(
+                  title: Text(_toDoList[index]['title']),
+                  value: _toDoList[index]['ok'],
+                  secondary: CircleAvatar(
+                    child: Icon(_toDoList[index]['ok']?Icons.check: Icons.error),
+                  ),
                 );
-                default:
-                if(snapshot.hasError){
-                  return Center(
-                  child: Text('Erro ao carregar dados',
-                  style: TextStyle(color: Colors.amber, fontSize: 25),)
-                  );
-                }else{
-                  dolar = snapshot.data['results']['currencies']['USD']['buy'];
-                  euro = snapshot.data['results']['currencies']['EUR']['buy'];
-                  return SingleChildScrollView(
-                    padding: EdgeInsets.all(10),
-                    child:  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Icon(Icons.monetization_on, size: 150,  color: Colors.amber,),
-                        criarInputs('Reais', 'R\$', realController, _realChanger),
-                        Divider(),
-                        criarInputs('Dólares', 'US\$', dolarController, _dolarChanger),
-                        Divider(), 
-                        criarInputs('Euros', '€', euroController, _euroChanger)
-                      ],
-                    ),
-                  );
-                }
-           }
-        })
-       );
+              }))
+        ],),
+    );
+  }
+  Future<File> _getFile() async{
+    final diretorio = await  getApplicationDocumentsDirectory();
+    return File('${diretorio.path}/tarefas.json');
+  }
+  Future<File> _salveData() async{
+    String data = json.encode(_toDoList);
+    final file = await _getFile();
+    file.writeAsString(data);
+  }
+  Future<String> _readData() async{
+    try {
+      final file = await _getFile();
+      return file.readAsString();
+    } catch (e) {
+      return null;
+    }
   }
 }
 
- Widget criarInputs(String label, String prefixo, TextEditingController ctrl, Function funcao){
-      return TextField(
-        controller: ctrl,
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.amber),
-        border: OutlineInputBorder(),
-          prefixText: prefixo,
-        ),
-        style: TextStyle(color: Colors.amber, fontSize: 25),
-        onChanged: funcao,
-      );
- }
